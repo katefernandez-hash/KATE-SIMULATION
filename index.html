@@ -1,115 +1,253 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Assignment Submission System</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
-  <style>
-    body { font-family:'Segoe UI',sans-serif; background: linear-gradient(120deg, white, white); margin:0; overflow-x:hidden; }
-    .container { width: 90%; margin: 40px auto; background: antiquewhite; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    input, select { padding: 10px; margin: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; width: 220px; }
-    button { padding: 12px 24px; margin: 10px; border: none; border-radius: 8px; background: lightpink; color: white; cursor: pointer; font-weight: bold; font-size: 16px; }
-    button:hover { background: #ff7fa8; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th { background: lightpink; color: black; padding: 10px; }
-    td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
-    .preview { width: 80px; height: auto; border-radius: 8px; cursor: pointer; }
-    .popup, .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index: 10; display: none; }
-    .popup-box, .modal-box { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: fadeIn 0.3s ease; overflow: auto; }
-    @keyframes fadeIn { from {opacity:0; transform: scale(0.9);} to {opacity:1; transform: scale(1);} }
-    #fileModal .popup-box { width: 90%; max-width: 900px; max-height: 90%; overflow: auto; }
-    #fileFrame { width: 100%; height: 80vh; border: none; }
-    #fileModal img, #fileModal .docContent { max-width: 100%; max-height: 80vh; object-fit: contain; display: block; margin: auto; overflow: auto; text-align: left; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anatomy Blitz: The Twist</title>
+    <style>
+        :root {
+            --bg: #0f0c29;
+            --accent: #00d2ff;
+            --secondary: #9d50bb;
+            --wrong: #ff4b2b;
+            --correct: #2ed573;
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 20px;
+            width: 450px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.1s linear;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            min-height: 60px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .btn.correct { background: var(--correct) !important; border-color: var(--correct); }
+        .btn.wrong { background: var(--wrong) !important; border-color: var(--wrong); }
+
+        #score-display {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hidden { display: none; }
+
+        .start-btn {
+            background: linear-gradient(to right, var(--accent), var(--secondary));
+            border: none;
+            font-weight: bold;
+            padding: 18px;
+            font-size: 1.1rem;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>📝 Assignment Submission of BSIT 2-A</h1>
 
-  <div id="homeScreen">
-    <h2>Select User</h2>
-    <button onclick="showStudentForm()">Student</button>
-    <button onclick="showAdminModal()">Instructor/Admin</button>
-  </div>
+    <div id="game-container">
+        <div id="start-screen">
+            <h1>Anatomy Blitz</h1>
+            <p>How well do you know your own body?</p>
+            <button class="btn start-btn" onclick="startGame()">INITIALIZE SCAN</button>
+        </div>
 
-  <div id="studentForm" style="display:none;">
-    <h3>Submit Assignment</h3>
-    <input type="text" id="studentName" placeholder="Student Name"><br>
-    <input type="text" id="studentID" placeholder="Student ID"><br>
-    <input type="text" id="course" placeholder="Course"><br>
-    <input type="text" id="assignmentTitle" placeholder="Assignment Title"><br>
-    <input type="file" id="fileUpload" accept="image/*,.pdf,.docx"><br>
-    <button onclick="submitAssignment()">Submit Assignment</button>
-    <button onclick="backToHome()">Back</button>
-  </div>
+        <div id="quiz-screen" class="hidden">
+            <div id="score-display">Neural Link: <span id="q-num">1</span>/10</div>
+            <div class="timer-container"><div id="timer-bar"></div></div>
+            <div class="question-text" id="question-text">Loading question...</div>
+            <div id="options-container"></div>
+        </div>
 
-  <div id="adminModal" class="modal">
-    <div class="modal-box">
-      <h3>🔐 Admin Login</h3>
-      <input type="password" id="adminPassword" placeholder="Enter Password"><br>
-      <button onclick="confirmAdmin()">Log In</button>
-      <button onclick="closeAdminModal()">Back</button>
+        <div id="end-screen" class="hidden">
+            <h1 id="result-title">Scan Complete</h1>
+            <p style="font-size: 1.4rem;">Accuracy: <span id="final-score">0</span>%</p>
+            <button class="btn start-btn" onclick="location.reload()">RE-CALIBRATE</button>
+        </div>
     </div>
-  </div>
-
-  <div id="adminPanel" style="display:none;">
-    <button onclick="backToHome()">⬅ Back</button>
-    <h3>📋 All Assignment Submissions</h3>
-    <table>
-      <thead>
-        <tr><th>Name</th><th>ID</th><th>Course</th><th>Assignment</th><th>File</th><th>Submission Time</th></tr>
-      </thead>
-      <tbody id="adminTable"></tbody>
-    </table>
-  </div>
-
-  <div id="successPopup" class="popup">
-    <div class="popup-box">
-      <h3 id="popupMessage"></h3>
-      <button onclick="closePopup()">OK</button>
-    </div>
-  </div>
-
-  <div id="fileModal" class="popup">
-    <div class="popup-box">
-      <iframe id="fileFrame"></iframe>
-      <div id="docContent" class="docContent"></div>
-      <button onclick="closeFileModal()">Close</button>
-    </div>
-  </div>
-</div>
 
 <script>
-let assignments = [];
+    const questions = [
+        { q: "Which bone is the only one in the human body not connected to another bone?", a: ["Hyoid", "Stirrup", "Patella"], c: 0 },
+        { q: "You have more of these in your mouth than there are people on Earth. What are they?", a: ["Taste buds", "Bacteria", "Nerve endings"], c: 1 },
+        { q: "What is the only part of the body that has no blood supply and gets oxygen directly from air?", a: ["The Cornea", "The Eardrum", "Enamel"], c: 0 },
+        { q: "Which organ can completely regrow itself even if 75% of it is removed?", a: ["Spleen", "Pancreas", "Liver"], c: 2 },
+        { q: "How many 'extra' bones are you born with that eventually fuse together as you grow?", a: ["45 bones", "64 bones", "94 bones"], c: 2 },
+        { q: "What is the strongest muscle in the human body based on its weight?", a: ["The Gluteus Maximus", "The Masseter (Jaw)", "The Heart"], c: 1 },
+        { q: "Which of these is the largest internal organ?", a: ["Small Intestine", "Lungs", "Liver"], c: 2 },
+        { q: "Where is the smallest bone in your body located?", a: ["Inside the ear", "The tip of the pinky", "The nose bridge"], c: 0 },
+        { q: "Your stomach lining is replaced every few days. Why?", a: ["To absorb nutrients", "To keep it from digesting itself", "To produce more acid"], c: 1 },
+        { q: "If you uncoiled all the DNA in your body, how far would it reach?", a: ["Across the USA", "To the Moon and back", "To Pluto and back"], c: 2 }
+    ];
 
-function showStudentForm(){ document.getElementById("homeScreen").style.display="none"; document.getElementById("studentForm").style.display="block"; }
-function backToHome(){ document.getElementById("studentForm").style.display="none"; document.getElementById("adminPanel").style.display="none"; document.getElementById("homeScreen").style.display="block"; }
-function showAdminModal(){ document.getElementById("adminModal").style.display="flex"; }
-function closeAdminModal(){ document.getElementById("adminModal").style.display="none"; }
+    let currentQ = 0;
+    let score = 0;
+    let timeLeft = 10;
+    let timerId;
 
-function submitAssignment(){
-  const name=document.getElementById("studentName").value.trim();
-  const id=document.getElementById("studentID").value.trim();
-  const course=document.getElementById("course").value.trim();
-  const assignment=document.getElementById("assignmentTitle").value.trim();
-  const fileInput=document.getElementById("fileUpload");
-  const file=fileInput.files[0];
-  if(!name||!id||!course||!assignment||!file){ alert("Complete all fields and select a file!"); return; }
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('quiz-screen').classList.remove('hidden');
+        loadQuestion();
+    }
 
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const fileData=e.target.result;
-    const submissionTime=new Date().toLocaleString();
-    assignments.push({name,id,course,assignment,fileData,filename:file.name,submissionTime});
-    showPopup("✅ Assignment Submitted Successfully!");
-    document.getElementById("studentName").value="";
-    document.getElementById("studentID").value="";
-    document.getElementById("course").value="";
-    document.getElementById("assignmentTitle").value="";
-    fileInput.value="";
-  }
-  reader.readAsDataURL(file);
-}
+    function loadQuestion() {
+        if (currentQ >= questions.length) {
+            return showResults();
+        }
 
+        const data = questions[currentQ];
+        document.getElementById('q-num').innerText = currentQ + 1;
+        document.getElementById('question-text').innerText = data.q;
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+
+        data.a.forEach((opt, idx) => {
+            const button = document.createElement('button');
+            button.className = 'btn';
+            button.innerText = opt;
+            button.onclick = () => checkAnswer(idx, button);
+            optionsContainer.appendChild(button);
+        });
+
+        startTimer();
+    }
+
+    function startTimer() {
+        timeLeft = 10;
+        const bar = document.getElementById('timer-bar');
+        bar.style.width = "100%";
+        
+        clearInterval(timerId);
+        timerId = setInterval(() => {
+            timeLeft -= 0.1;
+            bar.style.width = (timeLeft * 10) + "%";
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerId);
+                autoFail();
+            }
+        }, 100);
+    }
+
+    function checkAnswer(idx, btn) {
+        clearInterval(timerId);
+        const correct = questions[currentQ].c;
+        const allBtns = document.querySelectorAll('.options-container .btn');
+        
+        // Disable further clicking
+        const buttons = document.getElementById('options-container').children;
+        for (let b of buttons) b.style.pointerEvents = 'none';
+
+        if (idx === correct) {
+            score++;
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('wrong');
+            buttons[correct].classList.add('correct');
+        }
+
+        setTimeout(nextQuestion, 1200);
+    }
+
+    function autoFail() {
+        const correct = questions[currentQ].c;
+        const buttons = document.getElementById('options-container').children;
+        buttons[correct].classList.add('correct');
+        setTimeout(nextQuestion, 1200);
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('end-screen').classList.remove('hidden');
+        document.getElementById('final-score').innerText = (score / 10) * 100;
+        
+        if (score > 7) {
+            document.getElementById('result-title').innerText = "Medical Genius";
+        } else if (score > 4) {
+            document.getElementById('result-title').innerText = "Bio-Technician";
+        } else {
+            document.getElementById('result-title').innerText = "System Failure";
+        }
+    }
+</script>
+</body>
+</html>
 function confirmAdmin(){
   const password=document.getElementById("adminPassword").value;
   if(password==="admin123"){ document.getElementById("adminModal").style.display="none"; document.getElementById("homeScreen").style.display="none"; document.getElementById("adminPanel").style.display="block"; displayAdminRecords(); } 
