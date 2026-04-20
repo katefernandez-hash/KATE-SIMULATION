@@ -1,314 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anatomy Blitz: The Twist</title>
-    <style>
-        :root {
-            --bg: #0f0c29;
-            --accent: #00d2ff;
-            --secondary: #9d50bb;
-            --wrong: #ff4b2b;
-            --correct: #2ed573;
-        }
+  <meta charset="UTF-8">
+  <title>Quiz Game</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+    }
 
-        body {
-            margin: 0;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: white;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+    .container {
+      max-width: 500px;
+      margin: 50px auto;
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+    }
 
-        #game-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            padding: 40px;
-            border-radius: 20px;
-            width: 450px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-        }
+    button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: #3b82f6;
+      color: white;
+    }
 
-        h1 {
-            font-weight: 300;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 30px;
-            background: linear-gradient(to right, var(--accent), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    button:hover {
+      background: #2563eb;
+    }
 
-        .timer-container {
-            width: 100%;
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            margin: 20px 0;
-            overflow: hidden;
-        }
-
-        #timer-bar {
-            width: 100%;
-            height: 100%;
-            background: var(--accent);
-            transition: width 0.1s linear;
-        }
-
-        .question-text {
-            font-size: 1.2rem;
-            margin-bottom: 25px;
-            min-height: 60px;
-            line-height: 1.5;
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin: 12px 0;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        .btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-            border-color: var(--accent);
-        }
-
-        .btn.correct { background: var(--correct) !important; border-color: var(--correct); }
-        .btn.wrong { background: var(--wrong) !important; border-color: var(--wrong); }
-
-        #score-display {
-            font-size: 0.9rem;
-            color: var(--accent);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .hidden { display: none; }
-
-        .start-btn {
-            background: linear-gradient(to right, var(--accent), var(--secondary));
-            border: none;
-            font-weight: bold;
-            padding: 18px;
-            font-size: 1.1rem;
-        }
-    </style>
+    #nextBtn {
+      background: #22c55e;
+    }
+  </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="start-screen">
-            <h1>Anatomy Blitz</h1>
-            <p>How well do you know your own body?</p>
-            <button class="btn start-btn" onclick="startGame()">INITIALIZE SCAN</button>
-        </div>
+  <div class="container">
+    <h2 id="question">Question here</h2>
+    <div id="answers"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <p id="score"></p>
+  </div>
 
-        <div id="quiz-screen" class="hidden">
-            <div id="score-display">Neural Link: <span id="q-num">1</span>/10</div>
-            <div class="timer-container"><div id="timer-bar"></div></div>
-            <div class="question-text" id="question-text">Loading question...</div>
-            <div id="options-container"></div>
-        </div>
-
-        <div id="end-screen" class="hidden">
-            <h1 id="result-title">Scan Complete</h1>
-            <p style="font-size: 1.4rem;">Accuracy: <span id="final-score">0</span>%</p>
-            <button class="btn start-btn" onclick="location.reload()">RE-CALIBRATE</button>
-        </div>
-    </div>
-
-<script>
-    const questions = [
-        { q: "Which bone is the only one in the human body not connected to another bone?", a: ["Hyoid", "Stirrup", "Patella"], c: 0 },
-        { q: "You have more of these in your mouth than there are people on Earth. What are they?", a: ["Taste buds", "Bacteria", "Nerve endings"], c: 1 },
-        { q: "What is the only part of the body that has no blood supply and gets oxygen directly from air?", a: ["The Cornea", "The Eardrum", "Enamel"], c: 0 },
-        { q: "Which organ can completely regrow itself even if 75% of it is removed?", a: ["Spleen", "Pancreas", "Liver"], c: 2 },
-        { q: "How many 'extra' bones are you born with that eventually fuse together as you grow?", a: ["45 bones", "64 bones", "94 bones"], c: 2 },
-        { q: "What is the strongest muscle in the human body based on its weight?", a: ["The Gluteus Maximus", "The Masseter (Jaw)", "The Heart"], c: 1 },
-        { q: "Which of these is the largest internal organ?", a: ["Small Intestine", "Lungs", "Liver"], c: 2 },
-        { q: "Where is the smallest bone in your body located?", a: ["Inside the ear", "The tip of the pinky", "The nose bridge"], c: 0 },
-        { q: "Your stomach lining is replaced every few days. Why?", a: ["To absorb nutrients", "To keep it from digesting itself", "To produce more acid"], c: 1 },
-        { q: "If you uncoiled all the DNA in your body, how far would it reach?", a: ["Across the USA", "To the Moon and back", "To Pluto and back"], c: 2 }
+  <script>
+    const quiz = [
+      {
+        question: "What does HTML stand for?",
+        answers: [
+          "Hyper Text Markup Language",
+          "High Tech Modern Language",
+          "Hyper Transfer Machine Language",
+          "Home Tool Markup Language"
+        ],
+        correct: 0
+      },
+      {
+        question: "Which language is used for styling web pages?",
+        answers: ["HTML", "Python", "CSS", "C++"],
+        correct: 2
+      },
+      {
+        question: "Which is a JavaScript framework?",
+        answers: ["Django", "React", "Laravel", "Flask"],
+        correct: 1
+      }
     ];
 
-    let currentQ = 0;
+    let currentQuestion = 0;
     let score = 0;
-    let timeLeft = 10;
-    let timerId;
-
-    function startGame() {
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('quiz-screen').classList.remove('hidden');
-        loadQuestion();
-    }
 
     function loadQuestion() {
-        if (currentQ >= questions.length) {
-            return showResults();
-        }
+      const q = quiz[currentQuestion];
+      document.getElementById("question").textContent = q.question;
 
-        const data = questions[currentQ];
-        document.getElementById('q-num').innerText = currentQ + 1;
-        document.getElementById('question-text').innerText = data.q;
-        const optionsContainer = document.getElementById('options-container');
-        optionsContainer.innerHTML = '';
+      const answersDiv = document.getElementById("answers");
+      answersDiv.innerHTML = "";
 
-        data.a.forEach((opt, idx) => {
-            const button = document.createElement('button');
-            button.className = 'btn';
-            button.innerText = opt;
-            button.onclick = () => checkAnswer(idx, button);
-            optionsContainer.appendChild(button);
-        });
-
-        startTimer();
+      q.answers.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = answer;
+        btn.onclick = () => checkAnswer(index);
+        answersDiv.appendChild(btn);
+      });
     }
 
-    function startTimer() {
-        timeLeft = 10;
-        const bar = document.getElementById('timer-bar');
-        bar.style.width = "100%";
-        
-        clearInterval(timerId);
-        timerId = setInterval(() => {
-            timeLeft -= 0.1;
-            bar.style.width = (timeLeft * 10) + "%";
-            
-            if (timeLeft <= 0) {
-                clearInterval(timerId);
-                autoFail();
-            }
-        }, 100);
-    }
-
-    function checkAnswer(idx, btn) {
-        clearInterval(timerId);
-        const correct = questions[currentQ].c;
-        const allBtns = document.querySelectorAll('.options-container .btn');
-        
-        // Disable further clicking
-        const buttons = document.getElementById('options-container').children;
-        for (let b of buttons) b.style.pointerEvents = 'none';
-
-        if (idx === correct) {
-            score++;
-            btn.classList.add('correct');
-        } else {
-            btn.classList.add('wrong');
-            buttons[correct].classList.add('correct');
-        }
-
-        setTimeout(nextQuestion, 1200);
-    }
-
-    function autoFail() {
-        const correct = questions[currentQ].c;
-        const buttons = document.getElementById('options-container').children;
-        buttons[correct].classList.add('correct');
-        setTimeout(nextQuestion, 1200);
+    function checkAnswer(index) {
+      if (index === quiz[currentQuestion].correct) {
+        score++;
+      }
+      nextQuestion();
     }
 
     function nextQuestion() {
-        currentQ++;
+      currentQuestion++;
+
+      if (currentQuestion < quiz.length) {
         loadQuestion();
+      } else {
+        document.querySelector(".container").innerHTML =
+          "<h2>Game Over!</h2><p>Your score: " + score + "/" + quiz.length + "</p>";
+      }
     }
 
-    function showResults() {
-        document.getElementById('quiz-screen').classList.add('hidden');
-        document.getElementById('end-screen').classList.remove('hidden');
-        document.getElementById('final-score').innerText = (score / 10) * 100;
-        
-        if (score > 7) {
-            document.getElementById('result-title').innerText = "Medical Genius";
-        } else if (score > 4) {
-            document.getElementById('result-title').innerText = "Bio-Technician";
-        } else {
-            document.getElementById('result-title').innerText = "System Failure";
-        }
-    }
-</script>
-</body>
-</html>
-function confirmAdmin(){
-  const password=document.getElementById("adminPassword").value;
-  if(password==="admin123"){ document.getElementById("adminModal").style.display="none"; document.getElementById("homeScreen").style.display="none"; document.getElementById("adminPanel").style.display="block"; displayAdminRecords(); } 
-  else{ alert("Incorrect Password"); }
-}
+    loadQuestion();
+  </script>
 
-function displayAdminRecords(){
-  const table=document.getElementById("adminTable"); table.innerHTML="";
-  assignments.forEach((a,index)=>{
-    let fileHTML="";
-    if(a.fileData.startsWith("data:image")) fileHTML=`<img src="${a.fileData}" class="preview" onclick="viewFile(${index})"/>`;
-    else if(a.filename.endsWith(".pdf")||a.filename.endsWith(".docx")) fileHTML=`<button onclick="viewFile(${index})">View File</button>`;
-    else fileHTML=`<a href="${a.fileData}" download="${a.filename}">Download File</a>`;
-    const row=document.createElement("tr");
-    row.innerHTML=`<td>${a.name}</td><td>${a.id}</td><td>${a.course}</td><td>${a.assignment}</td><td>${fileHTML}</td><td>${a.submissionTime}</td>`;
-    table.appendChild(row);
-  });
-}
-
-function showPopup(msg){ document.getElementById("popupMessage").innerText=msg; document.getElementById("successPopup").style.display="flex"; }
-function closePopup(){ document.getElementById("successPopup").style.display="none"; }
-
-function viewFile(index){
-  const file=assignments[index];
-  const modal=document.getElementById("fileModal");
-  const iframe=document.getElementById("fileFrame");
-  const docDiv=document.getElementById("docContent");
-  docDiv.innerHTML="";
-  if(file.fileData.startsWith("data:image")){
-    iframe.style.display="none"; docDiv.style.display="none";
-    let img=document.getElementById("fileImg"); if(!img){ img=document.createElement("img"); img.id="fileImg"; modal.querySelector(".popup-box").insertBefore(img, modal.querySelector("button")); }
-    img.src=file.fileData; img.style.display="block"; modal.style.display="flex";
-  } else if(file.filename.endsWith(".pdf")){
-    const blob=dataURLtoBlob(file.fileData); const url=URL.createObjectURL(blob);
-    iframe.src=url; iframe.style.display="block"; const img=document.getElementById("fileImg"); if(img) img.style.display="none"; docDiv.style.display="none"; modal.style.display="flex";
-  } else if(file.filename.endsWith(".docx")){
-    const blob=dataURLtoBlob(file.fileData); const reader=new FileReader();
-    reader.onload=function(e){ 
-      mammoth.extractRawText({arrayBuffer:e.target.result})
-        .then(result=>{ docDiv.textContent=result.value; docDiv.style.display="block"; iframe.style.display="none"; const img=document.getElementById("fileImg"); if(img) img.style.display="none"; modal.style.display="flex"; })
-        .catch(err=>alert("Cannot preview this Word file."));
-    };
-    reader.readAsArrayBuffer(blob);
-  } else {
-    alert("Cannot preview this file type. It will be downloaded."); 
-    const blob=dataURLtoBlob(file.fileData); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=file.filename; a.click();
-  }
-}
-
-function closeFileModal(){ 
-  document.getElementById("fileModal").style.display="none"; 
-  document.getElementById("fileFrame").src=""; 
-  const img=document.getElementById("fileImg"); if(img) img.style.display="none"; 
-  document.getElementById("docContent").style.display="none";
-}
-
-function dataURLtoBlob(dataurl){
-  const arr=dataurl.split(','); const mime=arr[0].match(/:(.*?);/)[1]; const bstr=atob(arr[1]); let n=bstr.length; const u8arr=new Uint8Array(n);
-  while(n--){ u8arr[n]=bstr.charCodeAt(n); }
-  return new Blob([u8arr], {type:mime});
-}
-</script>
 </body>
 </html>
