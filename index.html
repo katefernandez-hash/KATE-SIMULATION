@@ -2,31 +2,25 @@
 <html>
 <head>
   <title>Assignment Submission System</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
   <style>
-    body { font-family:'Segoe UI',sans-serif; background: linear-gradient(120deg, white, white); margin:0; overflow-x:hidden; }
-    .container { width: 90%; margin: 40px auto; background: antiquewhite; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    input, select { padding: 10px; margin: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; width: 220px; }
-    button { padding: 12px 24px; margin: 10px; border: none; border-radius: 8px; background: lightpink; color: white; cursor: pointer; font-weight: bold; font-size: 16px; }
-    button:hover { background: #ff7fa8; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th { background: lightpink; color: black; padding: 10px; }
-    td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
-    .preview { width: 80px; height: auto; border-radius: 8px; cursor: pointer; }
-    .popup, .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index: 10; display: none; }
-    .popup-box, .modal-box { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: fadeIn 0.3s ease; overflow: auto; }
-    @keyframes fadeIn { from {opacity:0; transform: scale(0.9);} to {opacity:1; transform: scale(1);} }
-    #fileModal .popup-box { width: 90%; max-width: 900px; max-height: 90%; overflow: auto; }
-    #fileFrame { width: 100%; height: 80vh; border: none; }
-    #fileModal img, #fileModal .docContent { max-width: 100%; max-height: 80vh; object-fit: contain; display: block; margin: auto; overflow: auto; text-align: left; }
+    body { font-family: 'Segoe UI', sans-serif; background:#f5f5f5; margin:0; }
+    .container { width:90%; margin:40px auto; background:antiquewhite; padding:30px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.2); text-align:center; }
+    input { padding:10px; margin:8px; border-radius:8px; border:1px solid #ccc; width:220px; }
+    button { padding:12px 24px; margin:10px; border:none; border-radius:8px; background:lightpink; color:white; font-weight:bold; cursor:pointer; }
+    button:hover { background:#ff7fa8; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th { background:lightpink; padding:10px; }
+    td { padding:10px; border-bottom:1px solid #ddd; }
+    .modal { position:fixed; top:0; left:0; width:100%; height:100%; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); }
+    .modal-box { background:white; padding:25px; border-radius:12px; text-align:center; }
   </style>
 </head>
 <body>
+
 <div class="container">
-  <h1>📝 Assignment Submission of BSIT 2-A</h1>
+  <h1>📝 Assignment Submission System</h1>
 
   <div id="homeScreen">
-    <h2>Select User</h2>
     <button onclick="showStudentForm()">Student</button>
     <button onclick="showAdminModal()">Instructor/Admin</button>
   </div>
@@ -37,190 +31,133 @@
     <input type="text" id="studentID" placeholder="Student ID"><br>
     <input type="text" id="course" placeholder="Course"><br>
     <input type="text" id="assignmentTitle" placeholder="Assignment Title"><br>
-    <input type="file" id="fileUpload" accept="image/*,.pdf,.docx"><br>
-    <button onclick="submitAssignment()">Submit Assignment</button>
+    <input type="file" id="fileUpload"><br>
+    <button onclick="submitAssignment()">Submit</button>
     <button onclick="backToHome()">Back</button>
   </div>
 
   <div id="adminModal" class="modal">
     <div class="modal-box">
-      <h3>🔐 Admin Login</h3>
-      <input type="password" id="adminPassword" placeholder="Enter Password"><br>
-      <button onclick="confirmAdmin()">Log In</button>
+      <h3>Admin Login</h3>
+      <input type="password" id="adminPassword" placeholder="Password"><br>
+      <button onclick="confirmAdmin()">Login</button>
       <button onclick="closeAdminModal()">Back</button>
     </div>
   </div>
 
   <div id="adminPanel" style="display:none;">
-    <button onclick="backToHome()">⬅ Back</button>
-    <h3>📋 All Assignment Submissions</h3>
+    <button onclick="backToHome()">Back</button>
+    <h3>All Submissions</h3>
     <table>
       <thead>
-        <tr><th>Name</th><th>ID</th><th>Course</th><th>Assignment</th><th>File</th><th>Submission Time</th></tr>
+        <tr>
+          <th>Name</th><th>ID</th><th>Course</th><th>Assignment</th><th>File</th><th>Time</th>
+        </tr>
       </thead>
       <tbody id="adminTable"></tbody>
     </table>
   </div>
-
-  <div id="successPopup" class="popup">
-    <div class="popup-box">
-      <h3 id="popupMessage"></h3>
-      <button onclick="closePopup()">OK</button>
-    </div>
-  </div>
-
-  <div id="fileModal" class="popup">
-    <div class="popup-box">
-      <iframe id="fileFrame"></iframe>
-      <div id="docContent" class="docContent"></div>
-      <button onclick="closeFileModal()">Close</button>
-    </div>
-  </div>
 </div>
 
 <script>
-// ================= DATABASE (LOCAL STORAGE) =================
-let assignments = JSON.parse(localStorage.getItem("assignmentsDB")) || [];
+let assignments = [];
 
-function saveToDB(){
+// LOAD DATABASE
+function loadDB(){
+  assignments = JSON.parse(localStorage.getItem("assignmentsDB")) || [];
+}
+
+// SAVE DATABASE
+function saveDB(){
   localStorage.setItem("assignmentsDB", JSON.stringify(assignments));
 }
 
-// ================= NAVIGATION =================
-function showStudentForm(){ document.getElementById("homeScreen").style.display="none"; document.getElementById("studentForm").style.display="block"; }
-function backToHome(){ document.getElementById("studentForm").style.display="none"; document.getElementById("adminPanel").style.display="none"; document.getElementById("homeScreen").style.display="block"; }
-function showAdminModal(){ document.getElementById("adminModal").style.display="flex"; }
-function closeAdminModal(){ document.getElementById("adminModal").style.display="none"; }
+// NAVIGATION
+function showStudentForm(){
+  document.getElementById("homeScreen").style.display="none";
+  document.getElementById("studentForm").style.display="block";
+}
 
-// ================= SUBMIT (SAVE TO DATABASE) =================
+function backToHome(){
+  document.getElementById("studentForm").style.display="none";
+  document.getElementById("adminPanel").style.display="none";
+  document.getElementById("homeScreen").style.display="block";
+}
+
+function showAdminModal(){
+  document.getElementById("adminModal").style.display="flex";
+}
+
+function closeAdminModal(){
+  document.getElementById("adminModal").style.display="none";
+}
+
+// SUBMIT
 function submitAssignment(){
   const name=document.getElementById("studentName").value.trim();
   const id=document.getElementById("studentID").value.trim();
   const course=document.getElementById("course").value.trim();
   const assignment=document.getElementById("assignmentTitle").value.trim();
-  const fileInput=document.getElementById("fileUpload");
-  const file=fileInput.files[0];
+  const file=document.getElementById("fileUpload").files[0];
 
-  if(!name||!id||!course||!assignment||!file){ alert("Complete all fields and select a file!"); return; }
+  if(!name||!id||!course||!assignment||!file){ alert("Fill all fields!"); return; }
 
   const reader=new FileReader();
+
   reader.onload=function(e){
-    const fileData=e.target.result;
-    const submissionTime=new Date().toLocaleString();
+    assignments.push({
+      name,id,course,assignment,
+      fileData:e.target.result,
+      filename:file.name,
+      time:new Date().toLocaleString()
+    });
 
-    assignments.push({name,id,course,assignment,fileData,filename:file.name,submissionTime});
+    saveDB();
+    displayAdminRecords();
+    alert("Submitted Successfully!");
+  };
 
-    saveToDB(); // 🔥 SAVE TO DATABASE
-
-    showPopup("✅ Assignment Submitted Successfully!");
-
-    document.getElementById("studentName").value="";
-    document.getElementById("studentID").value="";
-    document.getElementById("course").value="";
-    document.getElementById("assignmentTitle").value="";
-    fileInput.value="";
-  }
   reader.readAsDataURL(file);
 }
 
-// ================= ADMIN =================
+// ADMIN LOGIN
 function confirmAdmin(){
-  const password=document.getElementById("adminPassword").value;
-  if(password==="admin123"){
+  let pass=document.getElementById("adminPassword").value;
+  if(pass==="admin123"){
     document.getElementById("adminModal").style.display="none";
     document.getElementById("homeScreen").style.display="none";
     document.getElementById("adminPanel").style.display="block";
     displayAdminRecords();
-  } else { alert("Incorrect Password"); }
-}
-
-function displayAdminRecords(){
-  const table=document.getElementById("adminTable");
-  table.innerHTML="";
-
-  assignments.forEach((a,index)=>{
-    let fileHTML="";
-    if(a.fileData.startsWith("data:image")) fileHTML=`<img src="${a.fileData}" class="preview" onclick="viewFile(${index})"/>`;
-    else if(a.filename.endsWith(".pdf")||a.filename.endsWith(".docx")) fileHTML=`<button onclick="viewFile(${index})">View File</button>`;
-    else fileHTML=`<a href="${a.fileData}" download="${a.filename}">Download File</a>`;
-
-    const row=document.createElement("tr");
-    row.innerHTML=`<td>${a.name}</td><td>${a.id}</td><td>${a.course}</td><td>${a.assignment}</td><td>${fileHTML}</td><td>${a.submissionTime}</td>`;
-    table.appendChild(row);
-  });
-}
-
-// ================= POPUP =================
-function showPopup(msg){ document.getElementById("popupMessage").innerText=msg; document.getElementById("successPopup").style.display="flex"; }
-function closePopup(){ document.getElementById("successPopup").style.display="none"; }
-
-// ================= FILE VIEW =================
-function viewFile(index){
-  const file=assignments[index];
-  const modal=document.getElementById("fileModal");
-  const iframe=document.getElementById("fileFrame");
-  const docDiv=document.getElementById("docContent");
-
-  docDiv.innerHTML="";
-
-  if(file.fileData.startsWith("data:image")){
-    iframe.style.display="none";
-    docDiv.style.display="none";
-
-    let img=document.getElementById("fileImg");
-    if(!img){
-      img=document.createElement("img");
-      img.id="fileImg";
-      modal.querySelector(".popup-box").insertBefore(img, modal.querySelector("button"));
-    }
-    img.src=file.fileData;
-    img.style.display="block";
-    modal.style.display="flex";
-
-  } else if(file.filename.endsWith(".pdf")){
-    const blob=dataURLtoBlob(file.fileData);
-    const url=URL.createObjectURL(blob);
-    iframe.src=url;
-    iframe.style.display="block";
-    modal.style.display="flex";
-
-  } else if(file.filename.endsWith(".docx")){
-    const blob=dataURLtoBlob(file.fileData);
-    const reader=new FileReader();
-    reader.onload=function(e){ 
-      mammoth.extractRawText({arrayBuffer:e.target.result})
-        .then(result=>{
-          docDiv.textContent=result.value;
-          docDiv.style.display="block";
-          iframe.style.display="none";
-          modal.style.display="flex";
-        })
-        .catch(()=>alert("Cannot preview this Word file."));
-    };
-    reader.readAsArrayBuffer(blob);
   } else {
-    alert("Cannot preview this file. Downloading...");
-    const blob=dataURLtoBlob(file.fileData);
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download=file.filename;
-    a.click();
+    alert("Wrong password");
   }
 }
 
-function closeFileModal(){ 
-  document.getElementById("fileModal").style.display="none";
-  document.getElementById("fileFrame").src="";
-  const img=document.getElementById("fileImg"); if(img) img.style.display="none";
-  document.getElementById("docContent").style.display="none";
+// DISPLAY
+function displayAdminRecords(){
+  let table=document.getElementById("adminTable");
+  table.innerHTML="";
+
+  assignments.forEach(a=>{
+    table.innerHTML+=`
+      <tr>
+        <td>${a.name}</td>
+        <td>${a.id}</td>
+        <td>${a.course}</td>
+        <td>${a.assignment}</td>
+        <td><a href="${a.fileData}" download="${a.filename}">Download</a></td>
+        <td>${a.time}</td>
+      </tr>
+    `;
+  });
 }
 
-function dataURLtoBlob(dataurl){
-  const arr=dataurl.split(','); const mime=arr[0].match(/:(.*?);/)[1]; const bstr=atob(arr[1]); let n=bstr.length; const u8arr=new Uint8Array(n);
-  while(n--){ u8arr[n]=bstr.charCodeAt(n); }
-  return new Blob([u8arr], {type:mime});
-}
+// INIT
+window.onload=function(){
+  loadDB();
+  displayAdminRecords();
+};
 </script>
+
 </body>
 </html>
