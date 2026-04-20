@@ -1,1 +1,176 @@
-# KATE-SIMULATION
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Assignment Submission System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
+  <style>
+    body { font-family:'Segoe UI',sans-serif; background: linear-gradient(120deg, white, white); margin:0; overflow-x:hidden; }
+    .container { width: 90%; margin: 40px auto; background: antiquewhite; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
+    input, select { padding: 10px; margin: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; width: 220px; }
+    button { padding: 12px 24px; margin: 10px; border: none; border-radius: 8px; background: lightpink; color: white; cursor: pointer; font-weight: bold; font-size: 16px; }
+    button:hover { background: #ff7fa8; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { background: lightpink; color: black; padding: 10px; }
+    td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
+    .preview { width: 80px; height: auto; border-radius: 8px; cursor: pointer; }
+    .popup, .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index: 10; display: none; }
+    .popup-box, .modal-box { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: fadeIn 0.3s ease; overflow: auto; }
+    @keyframes fadeIn { from {opacity:0; transform: scale(0.9);} to {opacity:1; transform: scale(1);} }
+    #fileModal .popup-box { width: 90%; max-width: 900px; max-height: 90%; overflow: auto; }
+    #fileFrame { width: 100%; height: 80vh; border: none; }
+    #fileModal img, #fileModal .docContent { max-width: 100%; max-height: 80vh; object-fit: contain; display: block; margin: auto; overflow: auto; text-align: left; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>📝 Assignment Submission of BSIT 2-A</h1>
+
+  <div id="homeScreen">
+    <h2>Select User</h2>
+    <button onclick="showStudentForm()">Student</button>
+    <button onclick="showAdminModal()">Instructor/Admin</button>
+  </div>
+
+  <div id="studentForm" style="display:none;">
+    <h3>Submit Assignment</h3>
+    <input type="text" id="studentName" placeholder="Student Name"><br>
+    <input type="text" id="studentID" placeholder="Student ID"><br>
+    <input type="text" id="course" placeholder="Course"><br>
+    <input type="text" id="assignmentTitle" placeholder="Assignment Title"><br>
+    <input type="file" id="fileUpload" accept="image/*,.pdf,.docx"><br>
+    <button onclick="submitAssignment()">Submit Assignment</button>
+    <button onclick="backToHome()">Back</button>
+  </div>
+
+  <div id="adminModal" class="modal">
+    <div class="modal-box">
+      <h3>🔐 Admin Login</h3>
+      <input type="password" id="adminPassword" placeholder="Enter Password"><br>
+      <button onclick="confirmAdmin()">Log In</button>
+      <button onclick="closeAdminModal()">Back</button>
+    </div>
+  </div>
+
+  <div id="adminPanel" style="display:none;">
+    <button onclick="backToHome()">⬅ Back</button>
+    <h3>📋 All Assignment Submissions</h3>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>ID</th><th>Course</th><th>Assignment</th><th>File</th><th>Submission Time</th></tr>
+      </thead>
+      <tbody id="adminTable"></tbody>
+    </table>
+  </div>
+
+  <div id="successPopup" class="popup">
+    <div class="popup-box">
+      <h3 id="popupMessage"></h3>
+      <button onclick="closePopup()">OK</button>
+    </div>
+  </div>
+
+  <div id="fileModal" class="popup">
+    <div class="popup-box">
+      <iframe id="fileFrame"></iframe>
+      <div id="docContent" class="docContent"></div>
+      <button onclick="closeFileModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let assignments = [];
+
+function showStudentForm(){ document.getElementById("homeScreen").style.display="none"; document.getElementById("studentForm").style.display="block"; }
+function backToHome(){ document.getElementById("studentForm").style.display="none"; document.getElementById("adminPanel").style.display="none"; document.getElementById("homeScreen").style.display="block"; }
+function showAdminModal(){ document.getElementById("adminModal").style.display="flex"; }
+function closeAdminModal(){ document.getElementById("adminModal").style.display="none"; }
+
+function submitAssignment(){
+  const name=document.getElementById("studentName").value.trim();
+  const id=document.getElementById("studentID").value.trim();
+  const course=document.getElementById("course").value.trim();
+  const assignment=document.getElementById("assignmentTitle").value.trim();
+  const fileInput=document.getElementById("fileUpload");
+  const file=fileInput.files[0];
+  if(!name||!id||!course||!assignment||!file){ alert("Complete all fields and select a file!"); return; }
+
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const fileData=e.target.result;
+    const submissionTime=new Date().toLocaleString();
+    assignments.push({name,id,course,assignment,fileData,filename:file.name,submissionTime});
+    showPopup("✅ Assignment Submitted Successfully!");
+    document.getElementById("studentName").value="";
+    document.getElementById("studentID").value="";
+    document.getElementById("course").value="";
+    document.getElementById("assignmentTitle").value="";
+    fileInput.value="";
+  }
+  reader.readAsDataURL(file);
+}
+
+function confirmAdmin(){
+  const password=document.getElementById("adminPassword").value;
+  if(password==="admin123"){ document.getElementById("adminModal").style.display="none"; document.getElementById("homeScreen").style.display="none"; document.getElementById("adminPanel").style.display="block"; displayAdminRecords(); } 
+  else{ alert("Incorrect Password"); }
+}
+
+function displayAdminRecords(){
+  const table=document.getElementById("adminTable"); table.innerHTML="";
+  assignments.forEach((a,index)=>{
+    let fileHTML="";
+    if(a.fileData.startsWith("data:image")) fileHTML=`<img src="${a.fileData}" class="preview" onclick="viewFile(${index})"/>`;
+    else if(a.filename.endsWith(".pdf")||a.filename.endsWith(".docx")) fileHTML=`<button onclick="viewFile(${index})">View File</button>`;
+    else fileHTML=`<a href="${a.fileData}" download="${a.filename}">Download File</a>`;
+    const row=document.createElement("tr");
+    row.innerHTML=`<td>${a.name}</td><td>${a.id}</td><td>${a.course}</td><td>${a.assignment}</td><td>${fileHTML}</td><td>${a.submissionTime}</td>`;
+    table.appendChild(row);
+  });
+}
+
+function showPopup(msg){ document.getElementById("popupMessage").innerText=msg; document.getElementById("successPopup").style.display="flex"; }
+function closePopup(){ document.getElementById("successPopup").style.display="none"; }
+
+function viewFile(index){
+  const file=assignments[index];
+  const modal=document.getElementById("fileModal");
+  const iframe=document.getElementById("fileFrame");
+  const docDiv=document.getElementById("docContent");
+  docDiv.innerHTML="";
+  if(file.fileData.startsWith("data:image")){
+    iframe.style.display="none"; docDiv.style.display="none";
+    let img=document.getElementById("fileImg"); if(!img){ img=document.createElement("img"); img.id="fileImg"; modal.querySelector(".popup-box").insertBefore(img, modal.querySelector("button")); }
+    img.src=file.fileData; img.style.display="block"; modal.style.display="flex";
+  } else if(file.filename.endsWith(".pdf")){
+    const blob=dataURLtoBlob(file.fileData); const url=URL.createObjectURL(blob);
+    iframe.src=url; iframe.style.display="block"; const img=document.getElementById("fileImg"); if(img) img.style.display="none"; docDiv.style.display="none"; modal.style.display="flex";
+  } else if(file.filename.endsWith(".docx")){
+    const blob=dataURLtoBlob(file.fileData); const reader=new FileReader();
+    reader.onload=function(e){ 
+      mammoth.extractRawText({arrayBuffer:e.target.result})
+        .then(result=>{ docDiv.textContent=result.value; docDiv.style.display="block"; iframe.style.display="none"; const img=document.getElementById("fileImg"); if(img) img.style.display="none"; modal.style.display="flex"; })
+        .catch(err=>alert("Cannot preview this Word file."));
+    };
+    reader.readAsArrayBuffer(blob);
+  } else {
+    alert("Cannot preview this file type. It will be downloaded."); 
+    const blob=dataURLtoBlob(file.fileData); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=file.filename; a.click();
+  }
+}
+
+function closeFileModal(){ 
+  document.getElementById("fileModal").style.display="none"; 
+  document.getElementById("fileFrame").src=""; 
+  const img=document.getElementById("fileImg"); if(img) img.style.display="none"; 
+  document.getElementById("docContent").style.display="none";
+}
+
+function dataURLtoBlob(dataurl){
+  const arr=dataurl.split(','); const mime=arr[0].match(/:(.*?);/)[1]; const bstr=atob(arr[1]); let n=bstr.length; const u8arr=new Uint8Array(n);
+  while(n--){ u8arr[n]=bstr.charCodeAt(n); }
+  return new Blob([u8arr], {type:mime});
+}
+</script>
+</body>
+</html>
