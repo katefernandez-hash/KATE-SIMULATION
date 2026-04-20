@@ -79,13 +79,20 @@
 </div>
 
 <script>
-let assignments = [];
+// ================= DATABASE (LOCAL STORAGE) =================
+let assignments = JSON.parse(localStorage.getItem("assignmentsDB")) || [];
 
+function saveToDB(){
+  localStorage.setItem("assignmentsDB", JSON.stringify(assignments));
+}
+
+// ================= NAVIGATION =================
 function showStudentForm(){ document.getElementById("homeScreen").style.display="none"; document.getElementById("studentForm").style.display="block"; }
 function backToHome(){ document.getElementById("studentForm").style.display="none"; document.getElementById("adminPanel").style.display="none"; document.getElementById("homeScreen").style.display="block"; }
 function showAdminModal(){ document.getElementById("adminModal").style.display="flex"; }
 function closeAdminModal(){ document.getElementById("adminModal").style.display="none"; }
 
+// ================= SUBMIT (SAVE TO DATABASE) =================
 function submitAssignment(){
   const name=document.getElementById("studentName").value.trim();
   const id=document.getElementById("studentID").value.trim();
@@ -93,14 +100,20 @@ function submitAssignment(){
   const assignment=document.getElementById("assignmentTitle").value.trim();
   const fileInput=document.getElementById("fileUpload");
   const file=fileInput.files[0];
+
   if(!name||!id||!course||!assignment||!file){ alert("Complete all fields and select a file!"); return; }
 
   const reader=new FileReader();
   reader.onload=function(e){
     const fileData=e.target.result;
     const submissionTime=new Date().toLocaleString();
+
     assignments.push({name,id,course,assignment,fileData,filename:file.name,submissionTime});
+
+    saveToDB(); // 🔥 SAVE TO DATABASE
+
     showPopup("✅ Assignment Submitted Successfully!");
+
     document.getElementById("studentName").value="";
     document.getElementById("studentID").value="";
     document.getElementById("course").value="";
@@ -110,59 +123,96 @@ function submitAssignment(){
   reader.readAsDataURL(file);
 }
 
+// ================= ADMIN =================
 function confirmAdmin(){
   const password=document.getElementById("adminPassword").value;
-  if(password==="admin123"){ document.getElementById("adminModal").style.display="none"; document.getElementById("homeScreen").style.display="none"; document.getElementById("adminPanel").style.display="block"; displayAdminRecords(); } 
-  else{ alert("Incorrect Password"); }
+  if(password==="admin123"){
+    document.getElementById("adminModal").style.display="none";
+    document.getElementById("homeScreen").style.display="none";
+    document.getElementById("adminPanel").style.display="block";
+    displayAdminRecords();
+  } else { alert("Incorrect Password"); }
 }
 
 function displayAdminRecords(){
-  const table=document.getElementById("adminTable"); table.innerHTML="";
+  const table=document.getElementById("adminTable");
+  table.innerHTML="";
+
   assignments.forEach((a,index)=>{
     let fileHTML="";
     if(a.fileData.startsWith("data:image")) fileHTML=`<img src="${a.fileData}" class="preview" onclick="viewFile(${index})"/>`;
     else if(a.filename.endsWith(".pdf")||a.filename.endsWith(".docx")) fileHTML=`<button onclick="viewFile(${index})">View File</button>`;
     else fileHTML=`<a href="${a.fileData}" download="${a.filename}">Download File</a>`;
+
     const row=document.createElement("tr");
     row.innerHTML=`<td>${a.name}</td><td>${a.id}</td><td>${a.course}</td><td>${a.assignment}</td><td>${fileHTML}</td><td>${a.submissionTime}</td>`;
     table.appendChild(row);
   });
 }
 
+// ================= POPUP =================
 function showPopup(msg){ document.getElementById("popupMessage").innerText=msg; document.getElementById("successPopup").style.display="flex"; }
 function closePopup(){ document.getElementById("successPopup").style.display="none"; }
 
+// ================= FILE VIEW =================
 function viewFile(index){
   const file=assignments[index];
   const modal=document.getElementById("fileModal");
   const iframe=document.getElementById("fileFrame");
   const docDiv=document.getElementById("docContent");
+
   docDiv.innerHTML="";
+
   if(file.fileData.startsWith("data:image")){
-    iframe.style.display="none"; docDiv.style.display="none";
-    let img=document.getElementById("fileImg"); if(!img){ img=document.createElement("img"); img.id="fileImg"; modal.querySelector(".popup-box").insertBefore(img, modal.querySelector("button")); }
-    img.src=file.fileData; img.style.display="block"; modal.style.display="flex";
+    iframe.style.display="none";
+    docDiv.style.display="none";
+
+    let img=document.getElementById("fileImg");
+    if(!img){
+      img=document.createElement("img");
+      img.id="fileImg";
+      modal.querySelector(".popup-box").insertBefore(img, modal.querySelector("button"));
+    }
+    img.src=file.fileData;
+    img.style.display="block";
+    modal.style.display="flex";
+
   } else if(file.filename.endsWith(".pdf")){
-    const blob=dataURLtoBlob(file.fileData); const url=URL.createObjectURL(blob);
-    iframe.src=url; iframe.style.display="block"; const img=document.getElementById("fileImg"); if(img) img.style.display="none"; docDiv.style.display="none"; modal.style.display="flex";
+    const blob=dataURLtoBlob(file.fileData);
+    const url=URL.createObjectURL(blob);
+    iframe.src=url;
+    iframe.style.display="block";
+    modal.style.display="flex";
+
   } else if(file.filename.endsWith(".docx")){
-    const blob=dataURLtoBlob(file.fileData); const reader=new FileReader();
+    const blob=dataURLtoBlob(file.fileData);
+    const reader=new FileReader();
     reader.onload=function(e){ 
       mammoth.extractRawText({arrayBuffer:e.target.result})
-        .then(result=>{ docDiv.textContent=result.value; docDiv.style.display="block"; iframe.style.display="none"; const img=document.getElementById("fileImg"); if(img) img.style.display="none"; modal.style.display="flex"; })
-        .catch(err=>alert("Cannot preview this Word file."));
+        .then(result=>{
+          docDiv.textContent=result.value;
+          docDiv.style.display="block";
+          iframe.style.display="none";
+          modal.style.display="flex";
+        })
+        .catch(()=>alert("Cannot preview this Word file."));
     };
     reader.readAsArrayBuffer(blob);
   } else {
-    alert("Cannot preview this file type. It will be downloaded."); 
-    const blob=dataURLtoBlob(file.fileData); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=file.filename; a.click();
+    alert("Cannot preview this file. Downloading...");
+    const blob=dataURLtoBlob(file.fileData);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=file.filename;
+    a.click();
   }
 }
 
 function closeFileModal(){ 
-  document.getElementById("fileModal").style.display="none"; 
-  document.getElementById("fileFrame").src=""; 
-  const img=document.getElementById("fileImg"); if(img) img.style.display="none"; 
+  document.getElementById("fileModal").style.display="none";
+  document.getElementById("fileFrame").src="";
+  const img=document.getElementById("fileImg"); if(img) img.style.display="none";
   document.getElementById("docContent").style.display="none";
 }
 
