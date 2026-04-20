@@ -1,117 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Quiz Game</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<title>Quiz Game Levels</title>
+<style>
+  body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+  }
 
-    .container {
-      max-width: 500px;
-      margin: 50px auto;
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 10px;
-    }
+  .container {
+    max-width: 500px;
+    margin: 50px auto;
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+  }
 
-    button {
-      display: block;
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      background: #3b82f6;
-      color: white;
-    }
+  button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #3b82f6;
+    color: white;
+  }
 
-    button:hover {
-      background: #2563eb;
-    }
+  button:hover {
+    background: #2563eb;
+  }
 
-    #nextBtn {
-      background: #22c55e;
-    }
-  </style>
+  #startBtn {
+    background: #22c55e;
+  }
+</style>
 </head>
 <body>
 
-  <div class="container">
-    <h2 id="question">Question here</h2>
-    <div id="answers"></div>
-    <button id="nextBtn" onclick="nextQuestion()">Next</button>
-    <p id="score"></p>
-  </div>
+<div class="container">
+  <h2 id="title">Quiz Game</h2>
+  <p id="levelDisplay"></p>
+  <h3 id="question"></h3>
+  <div id="answers"></div>
+  <button id="startBtn" onclick="startGame()">Start Game</button>
+  <p id="score"></p>
+</div>
 
-  <script>
-    const quiz = [
-      {
-        question: "What does HTML stand for?",
-        answers: [
-          "Hyper Text Markup Language",
-          "High Tech Modern Language",
-          "Hyper Transfer Machine Language",
-          "Home Tool Markup Language"
-        ],
-        correct: 0
-      },
-      {
-        question: "Which language is used for styling web pages?",
-        answers: ["HTML", "Python", "CSS", "C++"],
-        correct: 2
-      },
-      {
-        question: "Which is a JavaScript framework?",
-        answers: ["Django", "React", "Laravel", "Flask"],
-        correct: 1
-      }
-    ];
+<script>
+const levels = [
+  // LEVEL 1
+  [
+    {q:"2+2=?", a:["3","4","5","6"], c:1},
+    {q:"3+1=?", a:["2","3","4","5"], c:2},
+    {q:"5-2=?", a:["1","2","3","4"], c:2},
+    {q:"1+1=?", a:["1","2","3","4"], c:1},
+    {q:"4-1=?", a:["2","3","4","5"], c:1}
+  ],
+  // LEVEL 2
+  [
+    {q:"Capital of France?", a:["Rome","Paris","Berlin","Madrid"], c:1},
+    {q:"Capital of Japan?", a:["Seoul","Tokyo","Bangkok","Beijing"], c:1},
+    {q:"Capital of USA?", a:["NY","LA","Washington DC","Chicago"], c:2},
+    {q:"Capital of Italy?", a:["Rome","Paris","Madrid","Lisbon"], c:0},
+    {q:"Capital of Spain?", a:["Barcelona","Madrid","Seville","Valencia"], c:1}
+  ],
+  // LEVEL 3
+  [
+    {q:"HTML stands for?", a:["Hyper Text Markup Language","High Tool ML","Hyperlinks","None"], c:0},
+    {q:"CSS is used for?", a:["Logic","Design","Database","Server"], c:1},
+    {q:"JS is?", a:["Script","Style","Database","OS"], c:0},
+    {q:"Which is a tag?", a:["<div>","function()","var","int"], c:0},
+    {q:"Which is correct?", a:["HTML=design","CSS=logic","JS=script","None"], c:2}
+  ],
+  // LEVEL 4
+  [
+    {q:"5x5=?", a:["10","15","20","25"], c:3},
+    {q:"10/2=?", a:["2","3","5","6"], c:2},
+    {q:"9x2=?", a:["16","18","20","22"], c:1},
+    {q:"8+7=?", a:["14","15","16","17"], c:1},
+    {q:"6x3=?", a:["12","15","18","21"], c:2}
+  ],
+  // LEVEL 5
+  [
+    {q:"Largest planet?", a:["Earth","Mars","Jupiter","Saturn"], c:2},
+    {q:"Sun is a?", a:["Planet","Star","Moon","Galaxy"], c:1},
+    {q:"Water formula?", a:["CO2","H2O","O2","NaCl"], c:1},
+    {q:"Fastest land animal?", a:["Lion","Tiger","Cheetah","Horse"], c:2},
+    {q:"Earth shape?", a:["Flat","Round","Cube","Triangle"], c:1}
+  ]
+];
 
-    let currentQuestion = 0;
-    let score = 0;
+let currentLevel = 0;
+let currentQuestion = 0;
+let score = 0;
 
-    function loadQuestion() {
-      const q = quiz[currentQuestion];
-      document.getElementById("question").textContent = q.question;
+function startGame() {
+  document.getElementById("startBtn").style.display = "none";
+  score = 0;
+  currentLevel = 0;
+  loadQuestion();
+}
 
-      const answersDiv = document.getElementById("answers");
-      answersDiv.innerHTML = "";
+function loadQuestion() {
+  let qData = levels[currentLevel][currentQuestion];
 
-      q.answers.forEach((answer, index) => {
-        const btn = document.createElement("button");
-        btn.textContent = answer;
-        btn.onclick = () => checkAnswer(index);
-        answersDiv.appendChild(btn);
-      });
-    }
+  document.getElementById("levelDisplay").textContent = "Level " + (currentLevel + 1);
+  document.getElementById("question").textContent = qData.q;
 
-    function checkAnswer(index) {
-      if (index === quiz[currentQuestion].correct) {
-        score++;
-      }
-      nextQuestion();
-    }
+  let answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
 
-    function nextQuestion() {
-      currentQuestion++;
+  qData.a.forEach((ans, idx) => {
+    let btn = document.createElement("button");
+    btn.textContent = ans;
+    btn.onclick = () => checkAnswer(idx);
+    answersDiv.appendChild(btn);
+  });
+}
 
-      if (currentQuestion < quiz.length) {
-        loadQuestion();
-      } else {
-        document.querySelector(".container").innerHTML =
-          "<h2>Game Over!</h2><p>Your score: " + score + "/" + quiz.length + "</p>";
-      }
-    }
+function checkAnswer(index) {
+  if (index === levels[currentLevel][currentQuestion].c) {
+    score++;
+  }
 
+  currentQuestion++;
+
+  if (currentQuestion < 5) {
     loadQuestion();
-  </script>
+  } else {
+    currentLevel++;
+    currentQuestion = 0;
+
+    if (currentLevel < levels.length) {
+      alert("Level Up! Welcome to Level " + (currentLevel + 1));
+      loadQuestion();
+    } else {
+      document.querySelector(".container").innerHTML =
+        "<h2>Game Finished!</h2><p>Your Score: " + score + "/25</p>";
+    }
+  }
+}
+</script>
 
 </body>
 </html>
