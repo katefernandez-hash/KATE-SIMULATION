@@ -2,76 +2,98 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Quiz Game Levels</title>
+<title>Pro Quiz: Course Selection</title>
 <style>
   body {
-    font-family: Arial;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #0f172a;
     color: white;
     text-align: center;
+    margin: 0;
   }
 
   .container {
-    max-width: 500px;
+    max-width: 600px;
     margin: 50px auto;
     background: #1e293b;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
   }
 
   button {
     display: block;
     width: 100%;
     margin: 10px 0;
-    padding: 10px;
+    padding: 12px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     background: #3b82f6;
     color: white;
+    font-weight: bold;
+    transition: transform 0.1s, background 0.2s;
   }
 
-  #startBtn { background: #22c55e; }
+  button:hover { background: #2563eb; transform: scale(1.02); }
+  button:active { transform: scale(0.98); }
+
+  #startBtn { background: #22c55e; font-size: 1.2rem; }
+  
+  .grid-select {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
 
   /* POPUP */
   .popup {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.8);
     display: none;
     justify-content: center;
     align-items: center;
+    z-index: 10;
   }
 
   .popup-box {
     background: #1e293b;
-    padding: 20px;
+    padding: 30px;
     border-radius: 15px;
     width: 300px;
-    box-shadow: 0 0 15px #000;
+    border: 2px solid #3b82f6;
   }
 
-  .popup-box h3 {
-    margin-bottom: 10px;
-  }
-
-  .popup-box button {
-    background: #22c55e;
-  }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h2>Quiz Game</h2>
-  <p id="levelDisplay"></p>
-  <h3 id="question"></h3>
-  <div id="answers"></div>
-  <button id="startBtn" onclick="startGame()">Start Game</button>
+<div class="container" id="gameContainer">
+  <h2>🎓 Professional Quiz</h2>
+  
+  <div id="startScreen">
+    <p>Test your knowledge across different career paths.</p>
+    <button id="startBtn" onclick="showCourseSelection()">Start Game</button>
+  </div>
+
+  <div id="courseScreen" class="hidden">
+    <h3>Choose Your Course</h3>
+    <div class="grid-select" id="courseList"></div>
+  </div>
+
+  <div id="quizScreen" class="hidden">
+    <div style="display:flex; justify-content: space-between; font-size: 0.9rem; color: #94a3b8;">
+        <span id="courseDisplay"></span>
+        <span id="levelDisplay"></span>
+    </div>
+    <h3 id="question"></h3>
+    <div id="answers"></div>
+  </div>
 </div>
 
-<!-- POPUP -->
 <div class="popup" id="popup">
   <div class="popup-box">
     <h3 id="popupText"></h3>
@@ -80,64 +102,97 @@
 </div>
 
 <script>
-const levels = [
-  // LEVEL 1: BODY PARTS
-  [
-    {q:"What part pumps blood?", a:["Lungs","Heart","Brain","Liver"], c:1},
-    {q:"Used for seeing?", a:["Eyes","Ears","Nose","Mouth"], c:0},
-    {q:"Used for hearing?", a:["Eyes","Ears","Hands","Feet"], c:1},
-    {q:"You walk with?", a:["Hands","Head","Legs","Neck"], c:2},
-    {q:"You smell with?", a:["Eyes","Ears","Nose","Tongue"], c:2}
+const courseData = {
+  "Civil Engineering": [
+    [{q:"Primary material in concrete?", a:["Wood","Cement","Plastic","Glass"], c:1}], // L1
+    [{q:"Stress is defined as?", a:["Force/Area","Area/Force","Mass*Gravity","Volume"], c:0}], // L2
+    [{q:"A beam supported at one end?", a:["Simple","Cantilever","Fixed","Continuous"], c:1}], // L3
+    [{q:"What is Poissons Ratio?", a:["Density/Mass","Lat. Strain/Long. Strain","Stress/Strain","None"], c:1}], // L4
+    [{q:"Darcy's Law relates to?", a:["Steel Tension","Fluid flow in soil","Wind load","Seismic waves"], c:1}] // L5
   ],
-  // LEVEL 2: TECH LANGUAGES
-  [
-    {q:"Used for web structure?", a:["CSS","HTML","Python","Java"], c:1},
-    {q:"Used for styling?", a:["HTML","C++","CSS","PHP"], c:2},
-    {q:"Programming language?", a:["HTML","CSS","JavaScript","Tag"], c:2},
-    {q:"Backend language?", a:["Python","CSS","HTML","Design"], c:0},
-    {q:"Used for database?", a:["SQL","HTML","CSS","JS"], c:0}
+  "IT": [
+    [{q:"What does HTML stand for?", a:["Hyper Text Markup","High Tech Mail","Home Tool","Hyperlinks"], c:0}],
+    [{q:"Which is a Backend language?", a:["CSS","HTML","Node.js","Photoshop"], c:2}],
+    [{q:"Big O notation measures?", a:["Complexity","Color","Size","Speed of light"], c:0}],
+    [{q:"A 404 error means?", a:["Server Down","Not Found","Forbidden","Success"], c:1}],
+    [{q:"Encapsulation is a pillar of?", a:["SQL","OOP","CPU","Binary"], c:1}]
   ],
-  // LEVEL 3: GENERATIONS OF COMPUTER
-  [
-    {q:"1st gen used?", a:["Vacuum Tubes","Transistors","AI","Cloud"], c:0},
-    {q:"2nd gen used?", a:["Vacuum","Transistors","IC","Micro"], c:1},
-    {q:"3rd gen used?", a:["IC","AI","Cloud","None"], c:0},
-    {q:"4th gen used?", a:["Microprocessor","Vacuum","IC","Manual"], c:0},
-    {q:"5th gen focuses on?", a:["AI","Vacuum","Paper","Analog"], c:0}
+  "Law": [
+    [{q:"Highest law of the land?", a:["Civil Code","Constitution","Traffic Law","Bylaws"], c:1}],
+    [{q:"A 'Tort' is a?", a:["Criminal act","Civil wrong","Contract","Cake"], c:1}],
+    [{q:"Habeas Corpus refers to?", a:["Property","Detention","Marriage","Tax"], c:1}],
+    [{q:"Mens Rea means?", a:["Guilty Mind","Act of God","Fair trial","Evidence"], c:0}],
+    [{q:"Prima Facie means?", a:["After the fact","At first sight","Secretly","Legally void"], c:1}]
   ],
-  // LEVEL 4: INNER PLANET
-  [
-    {q:"Closest to sun?", a:["Earth","Mars","Mercury","Venus"], c:2},
-    {q:"Hottest planet?", a:["Earth","Venus","Mars","Mercury"], c:1},
-    {q:"We live on?", a:["Mars","Earth","Venus","Jupiter"], c:1},
-    {q:"Red planet?", a:["Mars","Earth","Saturn","Uranus"], c:0},
-    {q:"Has no life?", a:["Earth","Mars","Both","None"], c:1}
+  "Psychology": [
+    [{q:"Who founded Psychoanalysis?", a:["Pavlov","Freud","Skinner","Piaget"], c:1}],
+    [{q:"'ID' represents what?", a:["Logic","Instincts","Morals","Memory"], c:1}],
+    [{q:"Classical Conditioning used?", a:["Cats","Dogs","Birds","Humans"], c:1}],
+    [{q:"Cognitive Dissonance is?", a:["Mental Harmony","Mental Conflict","Sleep disorder","IQ test"], c:1}],
+    [{q:"What is the 'Placebo Effect'?", a:["Surgery","Fake treatment","Brain damage","Hypnosis"], c:1}]
   ],
-  // LEVEL 5: BINARY
-  [
-    {q:"Binary of 1?", a:["0","1","10","11"], c:1},
-    {q:"Binary uses?", a:["0 & 1","1-9","A-Z","Symbols"], c:0},
-    {q:"10 (binary) = ?", a:["1","2","3","4"], c:1},
-    {q:"11 (binary) = ?", a:["2","3","4","5"], c:1},
-    {q:"100 (binary) = ?", a:["2","3","4","5"], c:2}
+  "Pilot": [
+    [{q:"Provides upward lift?", a:["Tail","Wings","Wheels","Engine"], c:1}],
+    [{q:"VFR stands for?", a:["Visual Flight Rules","Very Fast Run","Velocity Factor","Vertical Flight"], c:0}],
+    [{q:"Standard Altimeter setting?", a:["29.92 Hg","30.00 Hg","28.50 Hg","1013 Pa"], c:0}],
+    [{q:"What causes a stall?", a:["High Speed","Critical Angle of Attack","Low Fuel","Heavy Load"], c:1}],
+    [{q:"Pitot Tube measures?", a:["Altitude","Airspeed","Oil Pressure","Temperature"], c:1}]
+  ],
+  "Marine": [
+    [{q:"Left side of a ship?", a:["Starboard","Port","Bow","Stern"], c:1}],
+    [{q:"A 'Knot' measures?", a:["Depth","Speed","Weight","Distance"], c:1}],
+    [{q:"Back of the ship?", a:["Port","Stern","Bridge","Hull"], c:1}],
+    [{q:"Used for navigation?", a:["RADAR","Oven","Siren","Anchor"], c:0}],
+    [{q:"Buoyancy is explained by?", a:["Newton","Archimedes","Einstein","Tesla"], c:1}]
+  ],
+  "Agriculture": [
+    [{q:"Study of soil management?", a:["Biology","Agronomy","Zoology","Physics"], c:1}],
+    [{q:"Primary nutrient in N-P-K?", a:["Nitrogen","Neon","Nickel","Nitrate"], c:0}],
+    [{q:"Process of water to plants?", a:["Mining","Irrigation","Plowing","Tiling"], c:1}],
+    [{q:"What is 'Hydroponics'?", a:["Soil farming","Water farming","Air farming","Space farming"], c:1}],
+    [{q:"pH 4.0 soil is considered?", a:["Neutral","Acidic","Alkaline","Perfect"], c:1}]
+  ],
+  "Education": [
+    [{q:"The 'Plan' for teaching?", a:["Lesson Plan","Notebook","Register","Map"], c:0}],
+    [{q:"Who is the 'Father of Kindergarten'?", a:["Dewey","Froebel","Vygotsky","Bloom"], c:1}],
+    [{q:"Pedagogy is the art of?", a:["Drawing","Teaching","Singing","Building"], c:1}],
+    [{q:"Bloom's Taxonomy classifies?", a:["Plants","Learning Objectives","School budget","Books"], c:1}],
+    [{q:"Formative Assessment happens?", a:["End of year","During learning","Before birth","Never"], c:1}]
   ]
-];
+};
 
+let selectedCourse = "";
 let currentLevel = 0;
 let currentQuestion = 0;
 let score = 0;
 
-function startGame() {
-  document.getElementById("startBtn").style.display = "none";
+function showCourseSelection() {
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("courseScreen").classList.remove("hidden");
+  
+  const list = document.getElementById("courseList");
+  list.innerHTML = "";
+  
+  Object.keys(courseData).forEach(course => {
+    let btn = document.createElement("button");
+    btn.textContent = course;
+    btn.onclick = () => selectCourse(course);
+    list.appendChild(btn);
+  });
+}
+
+function selectCourse(course) {
+  selectedCourse = course;
+  document.getElementById("courseScreen").classList.add("hidden");
+  document.getElementById("quizScreen").classList.remove("hidden");
   loadQuestion();
 }
 
 function loadQuestion() {
-  let qData = levels[currentLevel][currentQuestion];
+  let qData = courseData[selectedCourse][currentLevel][currentQuestion];
 
-  document.getElementById("levelDisplay").textContent =
-    "Level " + (currentLevel + 1);
-
+  document.getElementById("courseDisplay").textContent = selectedCourse;
+  document.getElementById("levelDisplay").textContent = "Difficulty: Level " + (currentLevel + 1);
   document.getElementById("question").textContent = qData.q;
 
   let answersDiv = document.getElementById("answers");
@@ -152,16 +207,17 @@ function loadQuestion() {
 }
 
 function checkAnswer(index) {
-  if (index === levels[currentLevel][currentQuestion].c) {
+  if (index === courseData[selectedCourse][currentLevel][currentQuestion].c) {
     score++;
   }
 
+  // To keep it simple, each level here has 1 question, but you can add more to the arrays!
   currentQuestion++;
 
-  if (currentQuestion < 5) {
+  if (currentQuestion < courseData[selectedCourse][currentLevel].length) {
     loadQuestion();
   } else {
-    showPopup("🎉 Level " + (currentLevel + 1) + " Complete!");
+    showPopup("🎯 Level " + (currentLevel + 1) + " Cleared!");
   }
 }
 
@@ -172,15 +228,17 @@ function showPopup(text) {
 
 function nextLevel() {
   document.getElementById("popup").style.display = "none";
-
   currentLevel++;
   currentQuestion = 0;
 
-  if (currentLevel < levels.length) {
+  if (currentLevel < 5) {
     loadQuestion();
   } else {
-    document.querySelector(".container").innerHTML =
-      "<h2>🏆 Game Finished!</h2><p>Your Score: " + score + "/25</p>";
+    document.getElementById("quizScreen").innerHTML = 
+      `<h2>🏆 ${selectedCourse} Expert!</h2>
+       <p>You completed all 5 levels.</p>
+       <p>Final Score: ${score}</p>
+       <button onclick="location.reload()">Try Another Course</button>`;
   }
 }
 </script>
