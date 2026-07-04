@@ -54,7 +54,7 @@
     <h2>📊 Final Assessment</h2>
     <h1 id="finalScoreDisplay"></h1>
     <div class="results-container" id="resultsLog"></div>
-    <button onclick="location.reload()" style="margin-top:20px;">Try a Different Course</button>
+    <button onclick="resetToMenu()" style="margin-top:20px;">Try a Different Course</button>
   </div>
 </div>
 
@@ -78,7 +78,7 @@ const gameData = {
   "Civil Engineering": [
     [{q:"Main component of concrete?", a:["Glue","Cement","Metal","Wood"], c:1}, {q:"Blueprints are usually drawn in?", a:["Portrait","Landscape","Plan View","3D"], c:2}, {q:"What is 'Dead Load'?", a:["Weight of people","Weight of structure","Wind","Earthquake"], c:1}, {q:"Hardest natural mineral?", a:["Steel","Granite","Diamond","Quartz"], c:2}, {q:"Which tool measures angles?", a:["Tape","Theodolite","Scale","Level"], c:1}],
     [{q:"Stress is calculated as?", a:["Force x Area","Force / Area","Mass / Vol","Area / Force"], c:1}, {q:"The 'Slump Test' measures?", a:["Strength","Workability","Color","Weight"], c:1}, {q:"A Cantilever is supported at?", a:["Both ends","Middle","One end","Center"], c:2}, {q:"What is 'Curing'?", a:["Mixing","Drying control","Breaking","Painting"], c:1}, {q:"Surveying: What is a Benchmark?", a:["A tool","Known elevation","A law","A chair"], c:1}],
-    [{q:"Hooke's Law relates to?", a:["Gravity","Elasticity","Fluids","Heat"], c:1}, {q:"Which soil has smallest particles?", a:["Sand","Silt","Clay","Gravel"], c:2}, {q:"Moment of Inertia measures?", a:["Speed","Mass","Resistance to rotation","Gravity"], c:2}, {q:"Primary purpose of Rebar?", a:["Decoration","Tensile strength","Weight","Rust"], c:1}, {q:"What is a 'Truss'?", a:["Pipe","Support frame","Wall","Foundation"], c:1}],
+    [{q:"Hooke's Law relates to?", a:["Gravity","Elasticity","Fluids","Heat"], c:1}, {q:"Which soil has smallest particles?", a:["Sand","Silt","Clay","Gravel"], c:2}, {q:"Moment of Inertia measures?", a:["Speed","Mass","Resistance to rotation","Gravity"], c:2}, {q:"Primary purpose of Rebar?", a:["Decoration","Tensile strength","Weight","Rust"], c:1}, {q:"What is 'Truss'?", a:["Pipe","Support frame","Wall","Foundation"], c:1}],
     [{q:"Standard Poissons ratio for concrete?", a:["0.50","0.15","1.0","0.80"], c:1}, {q:"What is 'Pre-stressing'?", a:["Adding load before use","Internal tension","Speeding up","Painting"], c:1}, {q:"Which is a deep foundation?", a:["Pad","Strip","Pile","Mat"], c:2}, {q:"What does 'M-20' represent?", a:["Mass","Mix proportion","Mix strength","Member length"], c:2}, {q:"A proctor test determines?", a:["Max density","Height","Width","Color"], c:0}],
     [{q:"Darcy's Law is used for?", a:["Steel","Hydraulic conductivity","Wind","Light"], c:1}, {q:"What is 'Creep'?", a:["Moving soil","Time-dependent deformation","Cracks","Leaks"], c:1}, {q:"Shear force is zero where ___ is max?", a:["Stress","Bending Moment","Strain","Deflection"], c:1}, {q:"Euler's formula predicts?", a:["Tensile failure","Buckling","Melting","Torsion"], c:1}, {q:"Modulus of Rigidity is?", a:["Stress/Strain","Shear Stress/Shear Strain","Mass/Area","None"], c:1}]
   ],
@@ -196,11 +196,30 @@ function finishGame() {
   document.getElementById("finishScreen").classList.remove("hidden");
   document.getElementById("finalScoreDisplay").textContent = `${score} / 25`;
   const log = document.getElementById("resultsLog");
+  log.innerHTML = ""; // Clear log elements before appending new runs
   userLog.forEach((item, i) => {
     log.innerHTML += `<div class="result-item"><strong>${i+1}. ${item.q}</strong><br>
     <span class="${item.ok?'correct':'wrong'}">Your Choice: ${item.u}</span>
     ${!item.ok?`<span class="correct-label">Correct: ${item.r}</span>`:''}</div>`;
   });
+}
+
+/* Added Reset Handler Function */
+function resetToMenu() {
+  // Reset all engine and dashboard status parameters
+  currentLevel = 0;
+  currentQuestion = 0;
+  score = 0;
+  userLog = [];
+  
+  // Clear layout text elements completely
+  document.getElementById("resultsLog").innerHTML = "";
+  document.getElementById("finalScoreDisplay").textContent = "";
+  document.getElementById("progress-fill").style.width = "0%";
+  
+  // Flip application structural views back onto menu tracking screens
+  document.getElementById("finishScreen").classList.add("hidden");
+  showCourseSelection();
 }
 </script>
 </body>
